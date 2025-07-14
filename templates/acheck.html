@@ -1,0 +1,169 @@
+function buildPublicHtml(data) {
+  const outerBg = data.eventType === "Engagement"
+    ? "images/engagement.jpg"
+    : data.eventType === "Reception"
+    ? "images/reception.jpg"
+    : "images/wedding.jpg";
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>${data.groomName} & ${data.brideName}'s Wedding Invitation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Open+Sans&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Open Sans', sans-serif;
+      overflow-x: hidden;
+      text-align: center;
+    }
+
+    .bg-image {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('${outerBg}');
+      background-size: cover;
+      background-position: center;
+      filter: blur(2px) brightness(60%);
+      z-index: -1;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      position: relative;
+      background-color: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(4px);
+      padding: 2rem;
+      margin-top: 3rem;
+      margin-bottom: 3rem;
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(214, 51, 108, 0.3);
+      animation: fadeIn 1.5s ease-in-out;
+    }
+
+    .inner-overlay {
+      backdrop-filter: blur(6px);
+      background-color: rgba(255, 255, 255, 0.85);
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(214, 51, 108, 0.15);
+      animation: fadeIn 1.5s ease-in-out;
+    }
+
+    h1 {
+      font-family: 'Great Vibes', cursive;
+      color: #d6336c;
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .invite-text,
+    .names,
+    .family-info,
+    .venue-details,
+    .map-link {
+      text-align: center;
+    }
+
+    .invite-text {
+      font-size: 1.2rem;
+      color: #333;
+      margin-bottom: 2rem;
+      line-height: 1.8;
+    }
+
+    .names {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #c2185b;
+      margin-bottom: 1rem;
+    }
+
+    .family-info {
+      margin: 2rem 0;
+      font-size: 1rem;
+      color: #444;
+      line-height: 1.6;
+    }
+
+    .venue-details {
+      font-size: 1rem;
+      color: #555;
+      line-height: 1.6;
+      margin-top: 2rem;
+    }
+
+    .map-link {
+      margin-top: 1.2rem;
+    }
+
+    .map-link a {
+      text-decoration: none;
+      background: #d6336c;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      display: inline-block;
+      transition: background 0.3s;
+    }
+
+    .map-link a:hover {
+      background: #e85d75;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-image"></div>
+  <div class="container">
+    <div class="inner-overlay">
+      <h1>${
+        data.eventType === "Marriage"
+          ? "👰 Wedding Invitation"
+          : data.eventType === "Engagement"
+          ? "💍 Engagement Invitation"
+          : "🎉 Reception Invitation"
+      }</h1>
+
+      <div class="invite-text">
+        You are cordially invited to the ${data.eventType.toLowerCase()} of<br/><br/>
+        <strong>${data.brideSuffix || ""} ${data.brideName}</strong><br/>
+        and<br/>
+        <strong>${data.groomSuffix || ""} ${data.groomName}</strong>
+      </div>
+
+      <div class="names">${data.brideName} & ${data.groomName}</div>
+
+      <div class="family-info">
+        Daughter of Mr. ${data.brideFather} & Mrs. ${data.brideMother}<br/>
+        Son of Mr. ${data.groomFather} & Mrs. ${data.groomMother}
+      </div>
+
+      <div class="venue-details">
+        <strong>${data.venueName}</strong><br/>
+        ${data.venueAddress.replace(/\n/g, "<br/>")}
+      </div>
+
+      ${
+        data.venueMap && data.venueMap.startsWith("http")
+          ? `<div class="map-link"><a href="${data.venueMap}" target="_blank">📍 View Map</a></div>`
+          : ""
+      }
+    </div>
+  </div>
+</body>
+</html>
+`;
+}

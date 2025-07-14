@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>h & hh - Invitation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Open+Sans&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Open Sans', sans-serif;
+      overflow-x: hidden;
+      text-align: center;
+      transition: opacity 1s ease-in-out;
+    }
+
+    .bg-image {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('/static/images/marriage.jpg');
+      background-size: cover;
+      background-position: center;
+      filter: blur(2px) brightness(60%);
+      z-index: -1;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background-image: url('/static/images/marriage2.jpg');
+      background-size: cover;
+      background-position: center;
+      padding: 2rem;
+      border-radius: 20px;
+      margin-top: 3rem;
+      margin-bottom: 3rem;
+      box-shadow: 0 0 30px rgba(214, 51, 108, 0.3);
+      background-color: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(4px);
+      animation: fadeIn 1.5s ease-in-out;
+    }
+
+    .inner-overlay {
+      backdrop-filter: blur(6px);
+      background-color: rgba(255, 255, 255, 0.85);
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(214, 51, 108, 0.15);
+      animation: fadeIn 1.5s ease-in-out;
+    }
+
+    h1 {
+      font-family: 'Great Vibes', cursive;
+      color: #d6336c;
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .invite-text, .names, .family-info, .venue-details, .map-link {
+      text-align: center;
+    }
+
+    .invite-text {
+      font-size: 1.2rem;
+      color: #333;
+      margin-bottom: 2rem;
+      line-height: 1.8;
+    }
+
+    .names {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #c2185b;
+      margin-bottom: 1rem;
+    }
+
+    .family-info {
+      margin: 2rem 0;
+      font-size: 1rem;
+      color: #444;
+      line-height: 1.6;
+    }
+
+    .section-title {
+      color: #d6336c;
+      font-weight: bold;
+      font-size: 1.4rem;
+      margin-top: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .venue-details {
+      font-size: 1rem;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .map-link {
+      margin-top: 1.2rem;
+    }
+
+    .map-link a {
+      text-decoration: none;
+      background: #d6336c;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      display: inline-block;
+      transition: background 0.3s;
+    }
+
+    .map-link a:hover {
+      background: #e85d75;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .loader-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 240, 245, 0.8);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .circular-text {
+      font-family: 'Great Vibes', cursive;
+      font-size: 1.5rem;
+      color: #d6336c;
+      animation: rotateText 1s linear infinite;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border: 3px dashed #d6336c;
+      padding: 1rem;
+    }
+
+    @keyframes rotateText {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    body.loaded .loader-overlay {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+
+<div class="bg-image"></div>
+  <!-- Loader -->
+  <div class="loader-overlay" id="loader">
+    <div class="circular-text" id="loadingText">Loading...</div>
+  </div>
+  	<script>
+    // Get the loader element
+    const loader = document.getElementById('loader');
+
+    // Set a timeout to hide the loader after 3 seconds (3000 milliseconds)
+    setTimeout(() => {
+        loader.style.opacity = '0'; // Start fading out
+        loader.addEventListener('transitionend', () => {
+            loader.style.display = 'none'; // Fully hide after fade
+        }, { once: true }); // Ensure the event listener runs only once
+    }, 3000); // 3 seconds
+</script>
+<div class="container">
+  <div class="inner-overlay">
+    <h1>
+      
+        👰 Wedding Invitation
+      
+    </h1>
+	
+
+    <div class="invite-text">
+      You are cordially invited to the marriage of<br/><br/>
+      <strong>hhhhhhhh hh</strong><br/>
+      and<br/>
+      <strong>hhhhh h</strong>
+    </div>
+
+    <div class="section-title">Bride & Groom</div>
+    <div class="names">hh & h</div>
+
+    <div class="family-info">
+      Daughter of Mr. hh & Mrs. h<br/>
+      Son of Mr. h & Mrs. h
+    </div>
+
+    <div class="section-title">Venue</div>
+    <div class="venue-details">
+      <strong>h</strong><br/>
+      h
+    </div>
+
+    
+
+  </div>
+</div>
+
+</body>
+</html>

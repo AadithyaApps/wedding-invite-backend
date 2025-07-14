@@ -1,0 +1,279 @@
+<!-- templates/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wedding Invite Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Open+Sans&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 2rem;
+      font-family: 'Open Sans', sans-serif;
+      background: linear-gradient(to bottom right, #ffe5ec, #fadadd);
+      color: #333;
+    }
+
+    h1 {
+      font-family: 'Great Vibes', cursive;
+      font-size: 3rem;
+      color: #d6336c;
+      text-align: center;
+    }
+
+    .template-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      padding: 2rem 0;
+    }
+
+    .template-card {
+      background: #ffffffcc;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(214, 51, 108, 0.3);
+      padding: 1rem;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .template-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .template-card img {
+      width: 100%;
+      border-radius: 10px;
+      object-fit: cover;
+      height: 180px;
+    }
+
+    .template-card h3 {
+      margin: 0.5rem 0;
+      color: #d6336c;
+    }
+
+    .template-card button {
+      background: #d6336c;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+      transition: background 0.3s ease;
+    }
+
+    .template-card button:hover {
+      background: #e85d75;
+    }
+
+    .btn-logout {
+      background: #d6336c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      display: block;
+      margin: 0 auto 2rem auto;
+      box-shadow: 0 0 15px rgba(214, 51, 108, 0.6);
+    }
+
+    .btn-logout:hover {
+      background-color: #e85d75;
+    }
+
+    .active-links {
+      margin-top: 3rem;
+    }
+
+    .active-links h2 {
+      text-align: center;
+      color: #d6336c;
+    }
+
+    .link-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .link-table th,
+    .link-table td {
+      border: 1px solid #f9c6d2;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .no-active {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 1.1rem;
+      color: #777;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1 id="greeting">Welcome...</h1>
+
+  <button class="btn-logout" onclick="logout()">Logout</button>
+
+  <div class="template-grid" id="templateGrid"></div>
+
+  <div class="active-links" id="activeLinksSection">
+    <h2>Active Invite Links</h2>
+    <table class="link-table" id="linkTable" style="display: none;">
+      <thead>
+        <tr>
+          <th>Bride & Groom</th>
+          <th>Invite Link</th>
+          <th>Expires In</th>
+        </tr>
+      </thead>
+      <tbody id="linkBody"></tbody>
+    </table>
+    <div class="no-active" id="noActiveLinks">No active links</div>
+  </div>
+
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCfcd2YOHjuB4PxVCJCyB7VdQVFIl28X-A",
+      authDomain: "wedding-invitate-maker.firebaseapp.com",
+      projectId: "wedding-invitate-maker",
+      storageBucket: "wedding-invitate-maker.appspot.com",
+      messagingSenderId: "552863401267",
+      appId: "1:552863401267:web:30c44fb86df329c07a2a46"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const greetingEl = document.getElementById("greeting");
+    const templateGrid = document.getElementById("templateGrid");
+    const linkBody = document.getElementById("linkBody");
+    const linkTable = document.getElementById("linkTable");
+    const noActiveLinks = document.getElementById("noActiveLinks");
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        const uid = user.uid;
+
+        db.collection("users").doc(uid).get()
+          .then(doc => {
+            const data = doc.data();
+            const name = (data && (data.firstName || data.fullName)) || "User";
+            greetingEl.textContent = `Welcome, ${name}`;
+          });
+
+        loadTemplate();
+        loadActiveLinks(user.uid);
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    function loadTemplate() {
+      const template = {
+        id: "template1",
+        name: "Classic Pink",
+        image: "images/classic-pink.jpg"
+      };
+
+      const card = document.createElement('div');
+      card.className = 'template-card';
+
+      card.innerHTML = `
+        <img src="${template.image}" alt="${template.name}">
+        <h3>${template.name}</h3>
+        <button onclick="useTemplate('${template.id}')">Use this template</button>
+      `;
+
+      templateGrid.appendChild(card);
+    }
+
+    function useTemplate(templateId) {
+      window.location.href = `customize.html?templateId=${encodeURIComponent(templateId)}`;
+    }
+
+    function loadActiveLinks(uid) {
+      const now = new Date();
+      const cutoff = new Date(now.getTime() - 5 * 60 * 1000); // 5 minutes ago
+
+      db.collection("published_invites")
+        .where("createdBy", "==", uid)
+        .where("publishedAt", ">", cutoff)
+        .get()
+        .then(snapshot => {
+          if (snapshot.empty) {
+            noActiveLinks.style.display = "block";
+            linkTable.style.display = "none";
+            return;
+          }
+
+          noActiveLinks.style.display = "none";
+          linkTable.style.display = "table";
+
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const inviteLink = `public_invite.html?id=${doc.id}`;
+
+            const publishedTime = data.publishedAt.toDate();
+            const expiresAt = new Date(publishedTime.getTime() + 5 * 60000);
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${data.brideName} & ${data.groomName}</td>
+              <td><a href="${inviteLink}" target="_blank">${inviteLink}</a></td>
+              <td><span class="countdown" data-expiry="${expiresAt.toISOString()}"></span></td>
+            `;
+            linkBody.appendChild(tr);
+          });
+
+          updateCountdowns();
+          setInterval(updateCountdowns, 1000);
+        });
+    }
+
+    function updateCountdowns() {
+      const countdownEls = document.querySelectorAll(".countdown");
+
+      countdownEls.forEach(el => {
+        const expiry = new Date(el.dataset.expiry);
+        const now = new Date();
+        const diff = Math.max(0, expiry - now);
+
+        if (diff <= 0) {
+          el.textContent = "Expired";
+          return;
+        }
+
+        const mins = Math.floor(diff / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
+        el.textContent = `${mins}m ${secs}s`;
+      });
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!-- templates/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login – Wedding Invite Maker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Open+Sans&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: linear-gradient(to bottom right, #ffe5ec, #fadadd);
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: #ffffffcc;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(255, 182, 193, 0.5);
+      width: 90%;
+      max-width: 450px;
+    }
+
+    h1 {
+      font-family: 'Great Vibes', cursive;
+      font-size: 2.5rem;
+      color: #d6336c;
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
+
+    button {
+      background-color: #d6336c;
+      color: white;
+      padding: 10px;
+      width: 100%;
+      margin-top: 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(214, 51, 108, 0.6);
+    }
+
+    button:hover {
+      background-color: #e85d75;
+    }
+
+    .google-btn {
+      background-color: #fff;
+      color: #444;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
+
+    .error {
+      color: red;
+      font-size: 0.9rem;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome Back</h1>
+    <input type="email" id="email" placeholder="Email" readonly>
+    <input type="password" id="password" placeholder="Password" required>
+    <div class="error" id="errorMsg"></div>
+    <button onclick="loginUser()">Login</button>
+   
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCfcd2YOHjuB4PxVCJCyB7VdQVFIl28X-A",
+      authDomain: "wedding-invitate-maker.firebaseapp.com",
+      projectId: "wedding-invitate-maker",
+      storageBucket: "wedding-invitate-maker.firebasestorage.app",
+      messagingSenderId: "552863401267",
+      appId: "1:552863401267:web:30c44fb86df329c07a2a46",
+      measurementId: "G-B2L2H80L00"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    window.onload = () => {
+      const params = new URLSearchParams(window.location.search);
+      const email = params.get("email");
+      if (email) {
+        document.getElementById("email").value = email;
+      }
+    };
+
+    function loginUser() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const errorDiv = document.getElementById("errorMsg");
+      errorDiv.textContent = "";
+
+      if (!email || !password) {
+        errorDiv.textContent = "⚠️ Please enter both email and password.";
+        return;
+      }
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          window.location.href = "\dashboard.html";
+        })
+        .catch(error => {
+          errorDiv.textContent = "❌ " + error.message;
+        });
+    }
+
+    
+  </script>
+</body>
+</html>

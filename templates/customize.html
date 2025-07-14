@@ -1,0 +1,278 @@
+<!-- templates/customize.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customize Wedding Invite</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Open+Sans&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: linear-gradient(to bottom right, #ffe5ec, #fadadd);
+      margin: 0;
+      padding: 2rem;
+    }
+
+    .container {
+      background: #ffffffcc;
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(214, 51, 108, 0.2);
+      max-width: 700px;
+      margin: auto;
+    }
+
+    h1 {
+      font-family: 'Great Vibes', cursive;
+      color: #d6336c;
+      text-align: center;
+      font-size: 2.5rem;
+    }
+
+    .section-title {
+      color: #d6336c;
+      margin-top: 2rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .radio-group {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .radio-group label {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin: 5px;
+      cursor: pointer;
+      background-color: white;
+    }
+
+    .radio-group input[type="radio"] {
+      display: none;
+    }
+
+    .radio-group input[type="radio"]:checked + label {
+      background-color: #d6336c;
+      color: white;
+      border-color: #d6336c;
+    }
+
+    #previewText {
+      margin-top: 1rem;
+      font-style: italic;
+      color: #444;
+      background: #fefefe;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #f6c1d1;
+    }
+
+    button {
+      background-color: #d6336c;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: block;
+      margin: 2rem auto 0;
+    }
+
+    button:hover {
+      background-color: #e85d75;
+    }
+
+    .error {
+      color: red;
+      font-size: 0.9rem;
+      margin-top: -10px;
+      margin-bottom: 10px;
+    }
+
+    .map-preview {
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .map-preview a {
+      color: #d6336c;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Customize Your Invite</h1>
+
+    <form id="customForm">
+      <!-- Event Type -->
+      <div class="section-title">🎯 Select Event Type</div>
+      <div class="radio-group">
+        <input type="radio" id="engagement" name="eventType" value="Engagement">
+        <label for="engagement">💍 Engagement</label>
+
+        <input type="radio" id="marriage" name="eventType" value="Marriage">
+        <label for="marriage">👰 Marriage</label>
+
+        <input type="radio" id="reception" name="eventType" value="Reception">
+        <label for="reception">🎉 Reception</label>
+      </div>
+      <div id="previewText">Please select an event to see preview text...</div>
+
+      <!-- Bride Info -->
+      <div class="section-title">👰 Bride Info</div>
+      <input type="text" id="brideSuffix" placeholder="Prefix/Suffix (e.g. Dr.)">
+      <input type="text" id="brideName" placeholder="Bride's Full Name" required>
+      <input type="text" id="brideFather" placeholder="Bride’s Father’s Name" required>
+      <input type="text" id="brideMother" placeholder="Bride’s Mother’s Name" required>
+
+      <!-- Groom Info -->
+      <div class="section-title">🤵 Groom Info</div>
+      <input type="text" id="groomSuffix" placeholder="Prefix/Suffix (e.g. Mr.)">
+      <input type="text" id="groomName" placeholder="Groom's Full Name" required>
+      <input type="text" id="groomFather" placeholder="Groom’s Father’s Name" required>
+      <input type="text" id="groomMother" placeholder="Groom’s Mother’s Name" required>
+
+      <!-- Venue Info -->
+      <div class="section-title">📍 Venue Info</div>
+      <input type="text" id="venueName" placeholder="Venue Name" required>
+      <textarea id="venueAddress" placeholder="Venue Address" rows="3" required></textarea>
+      <input type="url" id="venueMap" placeholder="Google Maps URL">
+      <div class="map-preview" id="mapPreview"></div>
+
+      <div id="error" class="error"></div>
+      <button type="button" onclick="saveDetails()">Save & Continue</button>
+    </form>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCfcd2YOHjuB4PxVCJCyB7VdQVFIl28X-A",
+    authDomain: "wedding-invitate-maker.firebaseapp.com",
+    projectId: "wedding-invitate-maker",
+    storageBucket: "wedding-invitate-maker.firebasestorage.app",
+    messagingSenderId: "552863401267",
+    appId: "1:552863401267:web:30c44fb86df329c07a2a46"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const previewText = document.getElementById("previewText");
+  const radios = document.querySelectorAll('input[name="eventType"]');
+
+  radios.forEach(radio => {
+    radio.addEventListener("change", () => {
+      switch (radio.value) {
+        case "Engagement":
+          previewText.textContent = "💍 We invite you to the engagement of...";
+          break;
+        case "Marriage":
+          previewText.textContent = "👰 Join us for the wedding ceremony of...";
+          break;
+        case "Reception":
+          previewText.textContent = "🎉 You’re cordially invited to the reception of...";
+          break;
+      }
+    });
+  });
+
+  const mapInput = document.getElementById("venueMap");
+  const mapPreview = document.getElementById("mapPreview");
+  mapInput.addEventListener("input", () => {
+    const url = mapInput.value.trim();
+    mapPreview.innerHTML = url ? `<a href="${url}" target="_blank">📍 View Map</a>` : "";
+  });
+
+  function saveDetails() {
+    const user = auth.currentUser;
+    const errorDiv = document.getElementById("error");
+    errorDiv.textContent = "";
+
+    if (!user) {
+      errorDiv.textContent = "You must be logged in to save details.";
+      return;
+    }
+
+    const eventTypeEl = document.querySelector('input[name="eventType"]:checked');
+    if (!eventTypeEl) {
+      errorDiv.textContent = "Please select an event type.";
+      return;
+    }
+
+    const details = {
+      eventType: eventTypeEl.value,
+      brideSuffix: document.getElementById("brideSuffix").value.trim(),
+      brideName: document.getElementById("brideName").value.trim(),
+      brideFather: document.getElementById("brideFather").value.trim(),
+      brideMother: document.getElementById("brideMother").value.trim(),
+      groomSuffix: document.getElementById("groomSuffix").value.trim(),
+      groomName: document.getElementById("groomName").value.trim(),
+      groomFather: document.getElementById("groomFather").value.trim(),
+      groomMother: document.getElementById("groomMother").value.trim(),
+      venueName: document.getElementById("venueName").value.trim(),
+      venueAddress: document.getElementById("venueAddress").value.trim(),
+      venueMap: document.getElementById("venueMap").value.trim()
+    };
+
+    // Validation
+    for (let key in details) {
+      if (key !== "brideSuffix" && key !== "groomSuffix" && key !== "venueMap" && !details[key]) {
+        errorDiv.textContent = "Please fill in all required fields.";
+        return;
+      }
+    }
+
+    // Save to user's profile
+    db.collection("users").doc(user.uid).set({
+      inviteDetails: details
+    }, { merge: true })
+    .then(() => {
+      // Also save to temp_invites for public link with expiration
+      return db.collection("temp_invites").add({
+        ...details,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
+        isExpired: false
+      });
+    })
+    .then(docRef => {
+      window.location.href = `preview.html?id=${docRef.id}`;
+    })
+    .catch(error => {
+      errorDiv.textContent = "Failed to save: " + error.message;
+    });
+  }
+
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = "login.html";
+    }
+  });
+</script>
+
+</body>
+</html>

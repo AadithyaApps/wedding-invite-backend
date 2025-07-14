@@ -1,0 +1,153 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wedding Invite Maker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Open+Sans&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Open Sans', sans-serif;
+      background: linear-gradient(to bottom right, #ffe5ec, #fadadd);
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .container {
+      text-align: center;
+      background-color: #ffffffcc;
+      padding: 3rem;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(255, 182, 193, 0.5);
+      max-width: 600px;
+      width: 90%;
+    }
+
+    h1 {
+      font-family: 'Great Vibes', cursive;
+      font-size: 3rem;
+      color: #d6336c;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: #555;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 1.5rem;
+      padding: 0.8rem 2rem;
+      font-size: 1.1rem;
+      background: #d6336c;
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      text-decoration: none;
+      transition: 0.3s ease;
+      box-shadow: 0 0 15px rgba(214, 51, 108, 0.6);
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background-color: #e85d75;
+      box-shadow: 0 0 25px rgba(214, 51, 108, 0.8);
+    }
+
+    input {
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
+      max-width: 90%;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    .error {
+      color: red;
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Create Your Wedding Invite</h1>
+    <p>Design and share a beautiful wedding invitation in just minutes.</p>
+    <p><strong>Free for 5 minutes.</strong> Keep it live for 1 month at just ₹100.</p>
+
+    <input type="email" id="email" placeholder="Enter your email" required>
+    <div id="error" class="error"></div>
+    <button class="btn" onclick="checkEmail()">✨ Start Creating</button>
+  </div>
+
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCfcd2YOHjuB4PxVCJCyB7VdQVFIl28X-A",
+      authDomain: "wedding-invitate-maker.firebaseapp.com",
+      projectId: "wedding-invitate-maker",
+      storageBucket: "wedding-invitate-maker.firebasestorage.app",
+      messagingSenderId: "552863401267",
+      appId: "1:552863401267:web:30c44fb86df329c07a2a46",
+      measurementId: "G-B2L2H80L00"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    function validateEmailFormat(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+      return re.test(String(email).toLowerCase());
+    }
+
+	function checkEmail() {
+	  const email = document.getElementById("email").value.trim().toLowerCase();
+	  const errorDiv = document.getElementById("error");
+
+	  if (!validateEmailFormat(email)) {
+		errorDiv.textContent = "❌ Please enter a valid email address.";
+		setTimeout(() => errorDiv.textContent = "", 5000);
+		return;
+	  }
+
+	  errorDiv.textContent = "";
+
+	  sessionStorage.setItem("userEmail", email);
+
+		auth.fetchSignInMethodsForEmail(email)
+		  .then(methods => {
+			console.log("Sign-in methods for", email, ":", methods);
+
+			if (methods.includes("password")) {
+			  window.location.href = `login.html?email=${encodeURIComponent(email)}`;
+			} else {
+			  window.location.href = `register.html?email=${encodeURIComponent(email)}`;
+			}
+		  })
+
+	}
+
+
+    // Handle "Enter" key
+    document.getElementById("email").addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        checkEmail();
+      }
+    });
+  </script>
+</body>
+</html>
