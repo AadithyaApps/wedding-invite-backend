@@ -64,7 +64,7 @@ def publish():
         repo.git.push()
         print("Git push successful!")
 
-        netlify_url = f"https://your-netlify-site.netlify.app/public-invites/{file_name}"
+        netlify_url = f"https://invitemaker.netlify.app/public-invites/{file_name}"
 
         return jsonify({"message": "Invite published!", "url": netlify_url})
 
