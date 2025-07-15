@@ -7,55 +7,66 @@ CORS(app)
 
 @app.route("/publish", methods=["POST"])
 def publish():
-    data = request.get_json()
+    try:
+        data = request.get_json()
+        print("Received Data:", data)
 
-    groom = data['groomName'].replace(' ', '')
-    bride = data['brideName'].replace(' ', '')
-    file_name = f"{groom}And{bride}.html"
+        required_fields = ['groomName', 'brideName', 'eventType', 'venueAddress', 'venueName', 
+                           'brideFather', 'brideMother', 'groomFather', 'groomMother']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({"error": f"Missing required field: {field}"}), 400
 
-    # Render the invite using template
-    rendered_html = render_template("public_template.html", **data)
+        groom = data['groomName'].replace(' ', '')
+        bride = data['brideName'].replace(' ', '')
+        file_name = f"{groom}And{bride}.html"
 
-    # Save locally (temporary path)
-    local_file_path = os.path.join("/tmp", file_name)
-    with open(local_file_path, "w", encoding="utf-8") as f:
-        f.write(rendered_html)
+        # Render HTML safely
+        rendered_html = render_template("public_template.html", **data)
 
-    # GitHub public invites repo
-    git_username = os.environ['GIT_USERNAME']
-    git_token = os.environ['GIT_TOKEN']
-    repo_url = f"https://{git_username}:{git_token}@github.com/AadithyaApps/wedding-invite-public.git"
-    repo_dir = "/tmp/wedding-invite-public"
+        local_file_path = os.path.join("/tmp", file_name)
+        with open(local_file_path, "w", encoding="utf-8") as f:
+            f.write(rendered_html)
+        print(f"HTML file generated at {local_file_path}")
 
-    # Clone if not already cloned
-    if not os.path.exists(repo_dir):
-        git.Repo.clone_from(repo_url, repo_dir)
-    repo = git.Repo(repo_dir)
+        # GitHub Setup
+        git_username = os.environ['GIT_USERNAME']
+        git_token = os.environ['GIT_TOKEN']
 
-    # Move file into public-invites folder
-    invites_folder = os.path.join(repo_dir, 'public-invites')
-    os.makedirs(invites_folder, exist_ok=True)
-    final_file_path = os.path.join(invites_folder, file_name)
-    os.replace(local_file_path, final_file_path)
+        if not git_username or not git_token:
+            return jsonify({"error": "Git credentials missing in environment"}), 500
 
+        repo_url = f"https://{git_username}:{git_token}@github.com/AadithyaApps/wedding-invite-public.git"
+        repo_dir = "/tmp/wedding-invite-public"
 
+        if not os.path.exists(repo_dir):
+            print("Cloning repo...")
+            git.Repo.clone_from(repo_url, repo_dir)
+        repo = git.Repo(repo_dir)
 
-    repo.git.config('user.email', 'aadithya.ofc@gmail.com')
-    repo.git.config('user.name', 'Aadithya Sridharan')
+        invites_folder = os.path.join(repo_dir, 'public-invites')
+        os.makedirs(invites_folder, exist_ok=True)
+        final_file_path = os.path.join(invites_folder, file_name)
+        os.replace(local_file_path, final_file_path)
+        print(f"Moved invite to {final_file_path}")
 
+        # Git Config
+        repo.git.config('user.email', 'aadithya.ofc@gmail.com')
+        repo.git.config('user.name', 'Aadithya Sridharan')
 
-    # Git commit and push
-    repo.git.add(all=True)
-    repo.git.commit('-m', f"Added invite for {groom} and {bride}")
-    repo.git.push()
+        repo.git.add(all=True)
+        repo.git.commit('-m', f"Added invite for {groom} and {bride}")
+        repo.git.push()
+        print("Git push successful!")
 
-    # Return public Netlify URL
-    netlify_url = f"https://your-netlify-site.netlify.app/public-invites/{file_name}"
+        netlify_url = f"https://your-netlify-site.netlify.app/public-invites/{file_name}"
 
-    return jsonify({
-        "message": "Invite published!",
-        "url": netlify_url
-    })
+        return jsonify({"message": "Invite published!", "url": netlify_url})
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
