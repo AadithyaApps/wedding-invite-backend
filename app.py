@@ -38,6 +38,12 @@ def publish():
     final_file_path = os.path.join(invites_folder, file_name)
     os.replace(local_file_path, final_file_path)
 
+
+
+    repo.git.config('user.email', 'aadithya.ofc@gmail.com')
+    repo.git.config('user.name', 'Aadithya Sridharan')
+
+
     # Git commit and push
     repo.git.add(all=True)
     repo.git.commit('-m', f"Added invite for {groom} and {bride}")
