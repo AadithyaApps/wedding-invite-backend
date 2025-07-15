@@ -14,7 +14,7 @@ def publish():
     file_name = f"{groom}And{bride}.html"
 
     # Render the invite using template
-    rendered_html = render_template("public_template.html", **data)
+    rendered_html = render_template("/templates/public_template.html", **data)
 
     # Save locally (temporary path)
     local_file_path = os.path.join("/tmp", file_name)
