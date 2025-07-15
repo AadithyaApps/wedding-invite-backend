@@ -24,7 +24,7 @@ def publish():
     # GitHub public invites repo
     git_username = os.environ['GIT_USERNAME']
     git_token = os.environ['GIT_TOKEN']
-    repo_url = f"https://{git_username}:{git_token}@github.com/AadithyaApps/wedding-invite-public.git"
+    repo_url = f"https://{AadithyaApp}:{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}@github.com/AadithyaApps/wedding-invite-public.git"
     repo_dir = "/tmp/wedding-invite-public"
 
     # Clone if not already cloned
