@@ -55,6 +55,11 @@ def publish():
         repo.git.config('user.name', 'Aadithya Sridharan')
 
         repo.git.add(all=True)
+        print("Files in public-invites folder:", os.listdir(invites_folder))
+        print("Full path file exists?", os.path.isfile(final_file_path))
+        status = repo.git.status()
+        print("Git status:", status)
+
         repo.git.commit('-m', f"Added invite for {groom} and {bride}")
         repo.git.push()
         print("Git push successful!")
