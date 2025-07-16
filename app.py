@@ -74,12 +74,19 @@ def publish():
         print("Error:", e)
         return jsonify({"error": str(e)}), 500
 
-@app.route("/cleanup", methods=["GET"])
 
+
+@app.route("/cleanup", methods=["GET"])
 def cleanup():
     try:
-        git_username = os.environ['GIT_USERNAME']
-        git_token = os.environ['GIT_TOKEN']
+        print("Cleanup started...")
+
+        git_username = os.environ.get('GIT_USERNAME')
+        git_token = os.environ.get('GIT_TOKEN')
+
+        if not git_username or not git_token:
+            print("Git credentials missing in environment.")
+            return jsonify({"error": "Git credentials missing in environment"}), 500
 
         repo_url = f"https://{git_username}:{git_token}@github.com/AadithyaApps/wedding-invite-public.git"
         repo_dir = "/tmp/wedding-invite-public"
@@ -87,30 +94,39 @@ def cleanup():
         if not os.path.exists(repo_dir):
             print("Cloning repository...")
             git.Repo.clone_from(repo_url, repo_dir)
+        else:
+            print("Repository already exists.")
 
         repo = git.Repo(repo_dir)
         repo.git.config('user.email', 'aadithya.ofc@gmail.com')
         repo.git.config('user.name', 'Aadithya Sridharan')
 
-        print("Pulling latest files...")
-        repo.remotes.origin.pull()  # ✅ Important fix
+        print("Pulling latest changes...")
+        repo.remotes.origin.pull()
 
         invites_folder = os.path.join(repo_dir, 'public-invites')
         temp_folder = os.path.join(invites_folder, 'temp_invites')
         os.makedirs(temp_folder, exist_ok=True)
 
+        print(f"Scanning folder: {invites_folder}")
+        print("Existing files:", os.listdir(invites_folder))
+
+        from datetime import datetime
+
         moved_files = []
         for file in os.listdir(invites_folder):
             file_path = os.path.join(invites_folder, file)
 
-            # ✅ Skip folders and temp_invites itself
-            if file == 'temp_invites' or not file.endswith('.html'):
+            if file == 'temp_invites':
+                print(f"Skipping folder: {file}")
+                continue
+            if not file.endswith('.html'):
+                print(f"Skipping non-HTML file: {file}")
                 continue
 
             created_time = os.path.getmtime(file_path)
             age_seconds = datetime.utcnow().timestamp() - created_time
-
-            print(f"Checking {file}: Age (seconds) = {age_seconds}")
+            print(f"File: {file}, Age (seconds): {age_seconds}")
 
             if age_seconds > 5 * 60:
                 new_path = os.path.join(temp_folder, file)
@@ -119,16 +135,29 @@ def cleanup():
                 print(f"Moved {file} to temp_invites")
 
         if moved_files:
+            print(f"Moved files: {moved_files}")
             repo.git.add(all=True)
-            repo.git.commit('-m', f"Moved {len(moved_files)} expired invites to temp_invites")
+            commit_msg = f"Moved {len(moved_files)} expired invites to temp_invites"
+            print(f"Committing changes: {commit_msg}")
+            repo.git.commit('-m', commit_msg)
+            print("Pushing changes to GitHub...")
             repo.git.push()
-            print(f"Moved files committed and pushed: {moved_files}")
+            print("Push completed.")
+        else:
+            print("No files moved. All invites are recent.")
 
-        return jsonify({"moved_files": moved_files}), 200
+        return jsonify({
+            "status": "Cleanup completed",
+            "moved_files": moved_files,
+            "all_files_now": os.listdir(invites_folder)
+        }), 200
 
     except Exception as e:
-        print("Cleanup Error:", e)
-        return jsonify({"error": str(e)}), 500
+        print("Cleanup Error:", str(e))
+        return jsonify({
+            "error": str(e),
+            "message": "An error occurred during cleanup"
+        }), 500
 
 
 
