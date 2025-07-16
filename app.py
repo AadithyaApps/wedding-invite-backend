@@ -2,6 +2,11 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import os, git
 from datetime import datetime
+from google.cloud import firestore
+from datetime import datetime, timezone
+import firebase_admin
+from firebase_admin import credentials
+from git import Repo
 
 
 app = Flask(__name__)
@@ -114,37 +119,42 @@ def cleanup():
         from datetime import datetime
 
         moved_files = []
+
         for file in os.listdir(invites_folder):
             file_path = os.path.join(invites_folder, file)
 
-            if file == 'temp_invites':
-                print(f"Skipping folder: {file}")
-                continue
-            if not file.endswith('.html'):
-                print(f"Skipping non-HTML file: {file}")
+            if file == 'temp_invites' or not file.endswith('.html'):
+                print(f"Skipping {file}")
                 continue
 
-            created_time = os.path.getmtime(file_path)
-            age_seconds = datetime.utcnow().timestamp() - created_time
-            print(f"File: {file}, Age (seconds): {age_seconds}")
+            try:
+                commits = list(repo.iter_commits(paths=file_path, max_count=1))
+                if not commits:
+                    print(f"No commits found for {file}, skipping.")
+                    continue
 
-            if age_seconds > 5 * 60:
-                new_path = os.path.join(temp_folder, file)
-                os.replace(file_path, new_path)
-                moved_files.append(file)
-                print(f"Moved {file} to temp_invites")
+                last_commit_time = commits[0].committed_date
+                age_seconds = datetime.utcnow().timestamp() - last_commit_time
+                print(f"File: {file}, Last Commit Age (seconds): {age_seconds}")
+
+                if age_seconds > 5 * 60:
+                    new_path = os.path.join(temp_folder, file)
+                    os.replace(file_path, new_path)
+                    moved_files.append(file)
+                    print(f"Moved {file} to temp_invites")
+
+            except Exception as fe:
+                print(f"Error processing {file}: {fe}")
 
         if moved_files:
             print(f"Moved files: {moved_files}")
             repo.git.add(all=True)
             commit_msg = f"Moved {len(moved_files)} expired invites to temp_invites"
-            print(f"Committing changes: {commit_msg}")
             repo.git.commit('-m', commit_msg)
-            print("Pushing changes to GitHub...")
             repo.git.push()
-            print("Push completed.")
+            print("Pushed cleanup changes to GitHub.")
         else:
-            print("No files moved. All invites are recent.")
+            print("No expired files found.")
 
         return jsonify({
             "status": "Cleanup completed",
