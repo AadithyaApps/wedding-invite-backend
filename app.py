@@ -73,9 +73,9 @@ def publish():
         return jsonify({"error": str(e)}), 500
 
 @app.route("/cleanup", methods=["GET"])
+
 def cleanup():
     try:
-        # GitHub Setup
         git_username = os.environ['GIT_USERNAME']
         git_token = os.environ['GIT_TOKEN']
 
@@ -83,41 +83,51 @@ def cleanup():
         repo_dir = "/tmp/wedding-invite-public"
 
         if not os.path.exists(repo_dir):
+            print("Cloning repository...")
             git.Repo.clone_from(repo_url, repo_dir)
 
         repo = git.Repo(repo_dir)
+        repo.git.config('user.email', 'aadithya.ofc@gmail.com')
+        repo.git.config('user.name', 'Aadithya Sridharan')
+
+        print("Pulling latest files...")
+        repo.remotes.origin.pull()  # ✅ Important fix
+
         invites_folder = os.path.join(repo_dir, 'public-invites')
         temp_folder = os.path.join(invites_folder, 'temp_invites')
         os.makedirs(temp_folder, exist_ok=True)
-        os.listdir(invites_folder)
+
         moved_files = []
         for file in os.listdir(invites_folder):
-            if file.endswith(".html"):
-                file_path = os.path.join(invites_folder, file)
-                created_time = os.path.getmtime(file_path)
+            file_path = os.path.join(invites_folder, file)
 
-                from datetime import datetime, timedelta
-                if datetime.utcnow().timestamp() - created_time > 5 * 60:
-                    os.replace(file_path, os.path.join(temp_folder, file))
-                    moved_files.append(file)
+            # ✅ Skip folders and temp_invites itself
+            if file == 'temp_invites' or not file.endswith('.html'):
+                continue
+
+            created_time = os.path.getmtime(file_path)
+            age_seconds = datetime.utcnow().timestamp() - created_time
+
+            print(f"Checking {file}: Age (seconds) = {age_seconds}")
+
+            if age_seconds > 5 * 60:
+                new_path = os.path.join(temp_folder, file)
+                os.replace(file_path, new_path)
+                moved_files.append(file)
+                print(f"Moved {file} to temp_invites")
 
         if moved_files:
-            repo.git.config('user.email', 'aadithya.ofc@gmail.com')
-            repo.git.config('user.name', 'Aadithya Sridharan')
             repo.git.add(all=True)
             repo.git.commit('-m', f"Moved {len(moved_files)} expired invites to temp_invites")
             repo.git.push()
-            print(f"Moved files: {moved_files}")
-            print("Files before cleanup:", os.listdir(invites_folder))
-            print("Files after cleanup:", os.listdir(invites_folder))
-            print("Files moved:", moved_files)
-
+            print(f"Moved files committed and pushed: {moved_files}")
 
         return jsonify({"moved_files": moved_files}), 200
 
     except Exception as e:
         print("Cleanup Error:", e)
         return jsonify({"error": str(e)}), 500
+
 
 
 if __name__ == "__main__":
