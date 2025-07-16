@@ -102,6 +102,8 @@ def cleanup():
                     moved_files.append(file)
 
         if moved_files:
+            repo.git.config('user.email', 'aadithya.ofc@gmail.com')
+            repo.git.config('user.name', 'Aadithya Sridharan')
             repo.git.add(all=True)
             repo.git.commit('-m', f"Moved {len(moved_files)} expired invites to temp_invites")
             repo.git.push()
