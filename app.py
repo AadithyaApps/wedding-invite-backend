@@ -89,7 +89,7 @@ def cleanup():
         invites_folder = os.path.join(repo_dir, 'public-invites')
         temp_folder = os.path.join(invites_folder, 'temp_invites')
         os.makedirs(temp_folder, exist_ok=True)
-
+        os.listdir(invites_folder)
         moved_files = []
         for file in os.listdir(invites_folder):
             if file.endswith(".html"):
@@ -106,6 +106,10 @@ def cleanup():
             repo.git.commit('-m', f"Moved {len(moved_files)} expired invites to temp_invites")
             repo.git.push()
             print(f"Moved files: {moved_files}")
+            print("Files before cleanup:", os.listdir(invites_folder))
+            print("Files after cleanup:", os.listdir(invites_folder))
+            print("Files moved:", moved_files)
+
 
         return jsonify({"moved_files": moved_files}), 200
 
