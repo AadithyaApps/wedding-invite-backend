@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import os, git
 from datetime import datetime
-from google.cloud import firestore
 from datetime import datetime, timezone
 from git import Repo
 
