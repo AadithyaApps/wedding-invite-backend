@@ -7,7 +7,20 @@ from git import Repo
 import shutil
 from google.cloud import firestore
 import pytz
+import json
+import tempfile
 
+credentials_path = '/tmp/gcp-creds.json'
+creds_content = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+
+if creds_content:
+    with open(credentials_path, 'w') as f:
+        f.write(creds_content)
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
+    
+    
+    
+    
 app = Flask(__name__)
 CORS(app)
 
