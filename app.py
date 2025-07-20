@@ -166,6 +166,62 @@ def cleanup():
             "message": "An error occurred during cleanup"
         }), 500
 
+@app.route("/restore-invite", methods=["POST"])
+def restore_invite():
+    try:
+        data = request.get_json()
+        invite_url = data.get('inviteUrl')
+
+        if not invite_url:
+            return jsonify({"error": "No inviteUrl provided"}), 400
+
+        filename = invite_url.strip().split('/')[-1]
+
+        print(f"Restoring invite: {filename}")
+
+        git_username = os.environ.get('GIT_USERNAME')
+        git_token = os.environ.get('GIT_TOKEN')
+
+        if not git_username or not git_token:
+            return jsonify({"error": "Git credentials missing in environment"}), 500
+
+        repo_url = f"https://{git_username}:{git_token}@github.com/AadithyaApps/wedding-invite-public.git"
+        repo_dir = "/tmp/wedding-invite-public"
+
+        if not os.path.exists(repo_dir):
+            print("Cloning repo...")
+            git.Repo.clone_from(repo_url, repo_dir)
+        repo = git.Repo(repo_dir)
+
+        invites_folder = os.path.join(repo_dir, 'public-invites')
+        temp_folder = os.path.join(invites_folder, 'temp_invites')
+
+        active_file_path = os.path.join(invites_folder, filename)
+        temp_file_path = os.path.join(temp_folder, filename)
+
+        repo.git.config('user.email', 'aadithya.ofc@gmail.com')
+        repo.git.config('user.name', 'Aadithya Sridharan')
+        repo.remotes.origin.pull()
+
+        if os.path.exists(active_file_path):
+            print(f"{filename} already exists in public-invites")
+            return jsonify({"status": "exists", "message": "File already active"}), 200
+
+        if os.path.exists(temp_file_path):
+            print(f"Restoring {filename} from temp_invites")
+            shutil.move(temp_file_path, active_file_path)
+            repo.git.add(all=True)
+            repo.git.commit('-m', f"Restored invite {filename} after payment success")
+            repo.git.push()
+            print("Restoration pushed to GitHub")
+            return jsonify({"status": "restored", "message": f"{filename} restored"}), 200
+
+        print(f"{filename} not found in temp_invites or public-invites")
+        return jsonify({"status": "not_found", "message": f"{filename} not found"}), 404
+
+    except Exception as e:
+        print("Restore Error:", str(e))
+        return jsonify({"error": str(e), "message": "An error occurred during restoration"}), 500
 
 
 if __name__ == "__main__":
