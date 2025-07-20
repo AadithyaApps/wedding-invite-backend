@@ -5,6 +5,8 @@ from datetime import datetime
 from datetime import datetime, timezone
 from git import Repo
 import shutil
+from google.cloud import firestore
+import pytz
 
 app = Flask(__name__)
 CORS(app)
@@ -83,88 +85,72 @@ def cleanup():
     try:
         print("Cleanup started...")
 
+        # Firebase credentials should be set via GOOGLE_APPLICATION_CREDENTIALS
+        db = firestore.Client()
+
         git_username = os.environ.get('GIT_USERNAME')
         git_token = os.environ.get('GIT_TOKEN')
 
         if not git_username or not git_token:
-            print("Git credentials missing in environment.")
             return jsonify({"error": "Git credentials missing in environment"}), 500
 
         repo_url = f"https://{git_username}:{git_token}@github.com/AadithyaApps/wedding-invite-public.git"
         repo_dir = "/tmp/wedding-invite-public"
 
         if not os.path.exists(repo_dir):
-            print("Cloning repository...")
             git.Repo.clone_from(repo_url, repo_dir)
-        else:
-            print("Repository already exists.")
-
         repo = git.Repo(repo_dir)
         repo.git.config('user.email', 'aadithya.ofc@gmail.com')
         repo.git.config('user.name', 'Aadithya Sridharan')
-
-        print("Pulling latest changes...")
         repo.remotes.origin.pull()
 
         invites_folder = os.path.join(repo_dir, 'public-invites')
         temp_folder = os.path.join(invites_folder, 'temp_invites')
         os.makedirs(temp_folder, exist_ok=True)
 
-        print(f"Scanning folder: {invites_folder}")
-        print("Existing files:", os.listdir(invites_folder))
-
-        from datetime import datetime
+        all_links = db.collection("published_links").stream()
 
         moved_files = []
+        now = datetime.now(timezone.utc)
 
-        for file in os.listdir(invites_folder):
-            file_path = os.path.join(invites_folder, file)
+        for link in all_links:
+            link_data = link.to_dict()
+            invite_url = link_data.get('inviteUrl')
+            expires_at = link_data.get('expiresAt')
 
-            if file == 'temp_invites' or not file.endswith('.html'):
-                print(f"Skipping {file}")
+            if not invite_url or not expires_at:
                 continue
 
-            try:
-                commits = list(repo.iter_commits(paths=file_path, max_count=1))
-                if not commits:
-                    print(f"No commits found for {file}, skipping.")
-                    continue
+            file_name = invite_url.strip().split('/')[-1]
+            file_path = os.path.join(invites_folder, file_name)
 
-                last_commit_time = commits[0].committed_date
-                age_seconds = datetime.utcnow().timestamp() - last_commit_time
-                print(f"File: {file}, Last Commit Age (seconds): {age_seconds}")
+            if not os.path.isfile(file_path):
+                print(f"File {file_name} not found in public-invites, skipping.")
+                continue
 
-                if age_seconds > 5 * 60:
-                    new_path = os.path.join(temp_folder, file)
-                    os.replace(file_path, new_path)
-                    moved_files.append(file)
-                    print(f"Moved {file} to temp_invites")
+            expires_dt = expires_at.replace(tzinfo=timezone.utc)
 
-            except Exception as fe:
-                print(f"Error processing {file}: {fe}")
+            if now > expires_dt:
+                print(f"{file_name} expired, moving to temp_invites.")
+                shutil.move(file_path, os.path.join(temp_folder, file_name))
+                moved_files.append(file_name)
+            else:
+                print(f"{file_name} is still valid till {expires_dt}.")
 
         if moved_files:
-            print(f"Moved files: {moved_files}")
             repo.git.add(all=True)
-            commit_msg = f"Moved {len(moved_files)} expired invites to temp_invites"
-            repo.git.commit('-m', commit_msg)
+            repo.git.commit('-m', f"Moved {len(moved_files)} expired invites to temp_invites")
             repo.git.push()
-            print("Pushed cleanup changes to GitHub.")
-        else:
-            print("No expired files found.")
 
         return jsonify({
             "status": "Cleanup completed",
-            "moved_files": moved_files,
-            "all_files_now": os.listdir(invites_folder)
+            "moved_files": moved_files
         }), 200
 
     except Exception as e:
         print("Cleanup Error:", str(e))
-        return jsonify({
-            "error": str(e),
-            "message": "An error occurred during cleanup"
-        }), 500
+        return jsonify({"error": str(e)}), 500
+        
 
 @app.route("/restore-invite", methods=["POST"])
 def restore_invite():
